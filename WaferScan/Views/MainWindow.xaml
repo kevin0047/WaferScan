@@ -5,29 +5,55 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewmodels="clr-namespace:WaferScan.ViewModels"
         mc:Ignorable="d"
-        Title="Wafer Image Generator" Height="450" Width="800">
+        Title="Wafer Image Generator" Height="600" Width="1000">
     <Window.DataContext>
         <viewmodels:MainViewModel/>
     </Window.DataContext>
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <!-- Original Image -->
-        <Image Grid.Column="0" Source="{Binding OriginalImage}" Stretch="Uniform" Margin="10"/>
+            <!-- Original Image Column -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Image Grid.Row="0" Source="{Binding OriginalImage}" Stretch="Uniform" Margin="10"/>
+                <TextBlock Grid.Row="1" Text="Original" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+            </Grid>
 
-        <!-- Generate Button -->
-        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10">
-            <Button Content="Generate New Image" Command="{Binding GenerateImageCommand}" 
-                    Padding="10,5" Margin="0,0,0,10"/>
-            <TextBlock Text="Original" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-            <TextBlock Text="Generated" HorizontalAlignment="Center"/>
+            <!-- Button Column -->
+            <Button Grid.Column="1" Content="Generate New Image" Command="{Binding GenerateImageCommand}" 
+                    Padding="10,5" Margin="10" VerticalAlignment="Center"/>
+
+            <!-- Generated Image Column -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Image Grid.Row="0" Source="{Binding GeneratedImage}" Stretch="Uniform" Margin="10"/>
+                <TextBlock Grid.Row="1" Text="Generated" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+            </Grid>
+        </Grid>
+
+        <!-- Image Information -->
+        <StackPanel Grid.Row="1" Margin="10">
+            <TextBlock Text="Image Information" FontWeight="Bold" Margin="0,0,0,5"/>
+            <TextBlock Text="{Binding OriginalName, StringFormat=Original Name: {0}}"/>
+            <TextBlock Text="{Binding SavedName, StringFormat=Saved Name: {0}}"/>
+            <TextBlock Text="{Binding DatabaseId, StringFormat=Database ID: {0}}"/>
+            <TextBlock Text="{Binding GeneratedTime, StringFormat=Generated Time: {0:yyyy-MM-dd HH:mm:ss}}"/>
+            <TextBlock Text="{Binding ProcessingTime, StringFormat=Processing Time: {0:hh\\:mm\\:ss\\.fff}}"/>
         </StackPanel>
-
-        <!-- Generated Image -->
-        <Image Grid.Column="2" Source="{Binding GeneratedImage}" Stretch="Uniform" Margin="10"/>
     </Grid>
 </Window>

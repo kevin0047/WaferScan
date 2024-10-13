@@ -6,7 +6,6 @@ using WaferScan.Models;
 using WaferScan.Services;
 using System.IO;
 using System.Reflection;
-using OpenCvSharp.Dnn;
 
 namespace WaferScan.ViewModels
 {
@@ -34,11 +33,66 @@ namespace WaferScan.ViewModels
             }
         }
 
+        private string _originalName;
+        public string OriginalName
+        {
+            get => _originalName;
+            set
+            {
+                _originalName = value;
+                OnPropertyChanged(nameof(OriginalName));
+            }
+        }
+
+        private string _savedName;
+        public string SavedName
+        {
+            get => _savedName;
+            set
+            {
+                _savedName = value;
+                OnPropertyChanged(nameof(SavedName));
+            }
+        }
+
+        private string _databaseId;
+        public string DatabaseId
+        {
+            get => _databaseId;
+            set
+            {
+                _databaseId = value;
+                OnPropertyChanged(nameof(DatabaseId));
+            }
+        }
+
+        private DateTime _generatedTime;
+        public DateTime GeneratedTime
+        {
+            get => _generatedTime;
+            set
+            {
+                _generatedTime = value;
+                OnPropertyChanged(nameof(GeneratedTime));
+            }
+        }
+
+        private TimeSpan _processingTime;
+        public TimeSpan ProcessingTime
+        {
+            get => _processingTime;
+            set
+            {
+                _processingTime = value;
+                OnPropertyChanged(nameof(ProcessingTime));
+            }
+        }
+
         public ICommand GenerateImageCommand { get; }
 
         private readonly WaferImage _waferImageModel;
         private readonly DatabaseService _databaseService;
-        private readonly string _imagePath = "Images/wafer.png";
+        private readonly string _imagePath;
         private readonly string _saveFolder;
 
         public MainViewModel()
@@ -47,45 +101,35 @@ namespace WaferScan.ViewModels
             _databaseService = new DatabaseService("mongodb://localhost:27017", "WaferScanDB");
             GenerateImageCommand = new RelayCommand(GenerateImage);
 
-            // 프로젝트 폴더 경로 가져오기
             string projectFolder = GetProjectFolder();
-
-            // 이미지 저장 폴더 설정 (변경된 부분)
             _saveFolder = GetGeneratedFolder();
-
-            // 이미지 경로 설정
             _imagePath = Path.Combine(projectFolder, "Images", "wafer.png");
 
             LoadOriginalImage();
         }
-        //프로젝트 경로
+
         private string GetProjectFolder()
         {
             // 실행 파일의 위치를 기준으로 프로젝트 폴더를 찾습니다.
             string executingAssemblyPath = Assembly.GetExecutingAssembly().Location;
             string executingFolder = Path.GetDirectoryName(executingAssemblyPath);
-
-            // bin\Debug\net6.0 (또는 유사한 경로)에서 상위 폴더로 이동
-            string projectFolder = Directory.GetParent(Directory.GetParent(Directory.GetParent(executingFolder).FullName).FullName).FullName;
-
-            return projectFolder;
+            return Directory.GetParent(Directory.GetParent(Directory.GetParent(executingFolder).FullName).FullName).FullName;
         }
-        //이미지 저장 경로
+
         private string GetGeneratedFolder()
         {
             string generatedFolder = Path.Combine("C:", "GeneratedImages");
-
-            // 폴더가 존재하지 않으면 생성합니다.
             if (!Directory.Exists(generatedFolder))
             {
                 Directory.CreateDirectory(generatedFolder);
             }
-
             return generatedFolder;
         }
 
         private void GenerateImage()
         {
+            DateTime startTime = DateTime.Now;
+
             var (originalName, savedName, generatedTime) = _waferImageModel.GenerateAndSaveRandomWaferImage(_imagePath, _saveFolder);
 
             using (Mat generatedImage = Cv2.ImRead(Path.Combine(_saveFolder, savedName)))
@@ -101,6 +145,12 @@ namespace WaferScan.ViewModels
             };
 
             _databaseService.SaveImageInfo(imageInfo);
+
+            OriginalName = originalName;
+            SavedName = savedName;
+            DatabaseId = imageInfo.Id;
+            GeneratedTime = generatedTime;
+            ProcessingTime = DateTime.Now - startTime;
         }
 
         private void LoadOriginalImage()
@@ -117,7 +167,6 @@ namespace WaferScan.ViewModels
 
         private BitmapSource ConvertMatToBitmapSource(Mat image)
         {
-            // 이미지 형식 확인
             System.Windows.Media.PixelFormat pixelFormat;
             switch (image.Channels())
             {
@@ -134,10 +183,7 @@ namespace WaferScan.ViewModels
                     throw new Exception($"지원되지 않는 채널 수: {image.Channels()}");
             }
 
-            // stride 계산
             int stride = image.Cols * image.Channels();
-
-            // 이미지 데이터 추출
             byte[] imageData = new byte[image.Rows * stride];
             System.Runtime.InteropServices.Marshal.Copy(image.Data, imageData, 0, imageData.Length);
 
@@ -145,7 +191,7 @@ namespace WaferScan.ViewModels
             return BitmapSource.Create(
                 image.Cols,
                 image.Rows,
-                96, 96, // DPI
+                96, 96,
                 pixelFormat,
                 null,
                 imageData,
