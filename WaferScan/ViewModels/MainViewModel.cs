@@ -6,6 +6,7 @@ using WaferScan.Models;
 using WaferScan.Services;
 using System.IO;
 using System.Reflection;
+using OpenCvSharp.Dnn;
 
 namespace WaferScan.ViewModels
 {
@@ -49,14 +50,15 @@ namespace WaferScan.ViewModels
             // 프로젝트 폴더 경로 가져오기
             string projectFolder = GetProjectFolder();
 
-            // 이미지 경로와 저장 폴더 설정
-            _imagePath = Path.Combine(projectFolder, "Images", "wafer.png");
-            _saveFolder = Path.Combine(projectFolder, "GeneratedImages");
+            // 이미지 저장 폴더 설정 (변경된 부분)
+            _saveFolder = GetGeneratedFolder();
 
-            Directory.CreateDirectory(_saveFolder);
+            // 이미지 경로 설정
+            _imagePath = Path.Combine(projectFolder, "Images", "wafer.png");
+
             LoadOriginalImage();
         }
-
+        //프로젝트 경로
         private string GetProjectFolder()
         {
             // 실행 파일의 위치를 기준으로 프로젝트 폴더를 찾습니다.
@@ -67,6 +69,19 @@ namespace WaferScan.ViewModels
             string projectFolder = Directory.GetParent(Directory.GetParent(Directory.GetParent(executingFolder).FullName).FullName).FullName;
 
             return projectFolder;
+        }
+        //이미지 저장 경로
+        private string GetGeneratedFolder()
+        {
+            string generatedFolder = Path.Combine("C:", "GeneratedImages");
+
+            // 폴더가 존재하지 않으면 생성합니다.
+            if (!Directory.Exists(generatedFolder))
+            {
+                Directory.CreateDirectory(generatedFolder);
+            }
+
+            return generatedFolder;
         }
 
         private void GenerateImage()
