@@ -20,7 +20,6 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-
             <!-- Original Image Column -->
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
@@ -30,11 +29,20 @@
                 <Image Grid.Row="0" Source="{Binding OriginalImage}" Stretch="Uniform" Margin="10"/>
                 <TextBlock Grid.Row="1" Text="Original" HorizontalAlignment="Center" Margin="0,5,0,0"/>
             </Grid>
-
             <!-- Button Column -->
-            <Button Grid.Column="1" Content="Generate New Image" Command="{Binding GenerateImageCommand}" 
-                    Padding="10,5" Margin="10" VerticalAlignment="Center"/>
-
+            <Button Grid.Column="1" Command="{Binding ToggleGenerationCommand}" 
+                    Padding="10,5" Margin="10" VerticalAlignment="Center">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsGenerating}" Value="True">
+                                <Setter Property="Background" Value="Red"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <TextBlock Text="{Binding GenerateButtonText}"/>
+            </Button>
             <!-- Generated Image Column -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
@@ -45,7 +53,7 @@
                 <TextBlock Grid.Row="1" Text="Generated" HorizontalAlignment="Center" Margin="0,5,0,0"/>
             </Grid>
         </Grid>
- 
+
         <!-- Image Information -->
         <StackPanel Grid.Row="1" Margin="10">
             <TextBlock Text="Image Information" FontWeight="Bold" Margin="0,0,0,5"/>

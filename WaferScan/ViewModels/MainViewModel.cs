@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using OpenCvSharp;
 using WaferScan.Models;
 using WaferScan.Services;
@@ -88,8 +89,22 @@ namespace WaferScan.ViewModels
             }
         }
 
-        public ICommand GenerateImageCommand { get; }
+        private bool _isGenerating;
+        public bool IsGenerating
+        {
+            get => _isGenerating;
+            set
+            {
+                _isGenerating = value;
+                OnPropertyChanged(nameof(IsGenerating));
+                OnPropertyChanged(nameof(ButtonText));
+            }
+        }
 
+        public string ButtonText => IsGenerating ? "Stop Generation" : "Start Generation";
+
+        public ICommand ToggleGenerationCommand { get; }
+        private readonly DispatcherTimer _generationTimer;
         private readonly WaferImage _waferImageModel;
         private readonly DatabaseService _databaseService;
         private readonly string _imagePath;
@@ -99,7 +114,14 @@ namespace WaferScan.ViewModels
         {
             _waferImageModel = new WaferImage();
             _databaseService = new DatabaseService("mongodb://localhost:27017", "WaferScanDB");
-            GenerateImageCommand = new RelayCommand(GenerateImage);
+            ToggleGenerationCommand = new RelayCommand(ToggleGeneration);
+
+            // 타이머 초기화
+            _generationTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)  // 1초 간격으로 이미지 생성
+            };
+            _generationTimer.Tick += GenerationTimer_Tick;
 
             string projectFolder = GetProjectFolder();
             _saveFolder = GetGeneratedFolder();
@@ -108,9 +130,38 @@ namespace WaferScan.ViewModels
             LoadOriginalImage();
         }
 
+        private void ToggleGeneration()
+        {
+            if (IsGenerating)
+            {
+                StopGeneration();
+            }
+            else
+            {
+                StartGeneration();
+            }
+        }
+
+        private void StartGeneration()
+        {
+            IsGenerating = true;
+            _generationTimer.Start();
+            GenerateImage(); // 즉시 첫 번째 이미지 생성
+        }
+
+        private void StopGeneration()
+        {
+            IsGenerating = false;
+            _generationTimer.Stop();
+        }
+
+        private void GenerationTimer_Tick(object sender, EventArgs e)
+        {
+            GenerateImage();
+        }
+
         private string GetProjectFolder()
         {
-            // 실행 파일의 위치를 기준으로 프로젝트 폴더를 찾습니다.
             string executingAssemblyPath = Assembly.GetExecutingAssembly().Location;
             string executingFolder = Path.GetDirectoryName(executingAssemblyPath);
             return Directory.GetParent(Directory.GetParent(Directory.GetParent(executingFolder).FullName).FullName).FullName;
@@ -187,7 +238,6 @@ namespace WaferScan.ViewModels
             byte[] imageData = new byte[image.Rows * stride];
             System.Runtime.InteropServices.Marshal.Copy(image.Data, imageData, 0, imageData.Length);
 
-            // BitmapSource 생성
             return BitmapSource.Create(
                 image.Cols,
                 image.Rows,

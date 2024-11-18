@@ -77,7 +77,8 @@ namespace WaferScan.Models
 
             // 회전 및 크기 조정 적용
             Mat rotatedImage = new Mat();
-            Cv2.WarpAffine(originalImage, rotatedImage, rotationMatrix, new Size(boundWidth, boundHeight), InterpolationFlags.Linear, BorderTypes.Constant, new Scalar(0, 0, 0));
+            //Cv2.WarpAffine(originalImage, rotatedImage, rotationMatrix, new Size(boundWidth, boundHeight), InterpolationFlags.Linear, BorderTypes.Constant, new Scalar(0, 0, 0));
+            Cv2.WarpAffine(originalImage, rotatedImage, rotationMatrix, new Size(boundWidth, boundHeight), InterpolationFlags.Linear, BorderTypes.Transparent);
 
             // 랜덤 이동 계산 (이미지가 화면 밖으로 나가지 않도록)
             int maxTranslateX = (int)(originalImage.Cols * (1 - scale) / 2);
@@ -95,8 +96,8 @@ namespace WaferScan.Models
             translationMatrix.Set<double>(1, 2, translateY);
 
             Mat result = new Mat();
-            Cv2.WarpAffine(rotatedImage, result, translationMatrix, originalImage.Size(), InterpolationFlags.Linear, BorderTypes.Constant, new Scalar(0, 0, 0));
-
+            //Cv2.WarpAffine(rotatedImage, result, translationMatrix, originalImage.Size(), InterpolationFlags.Linear, BorderTypes.Constant, new Scalar(0, 0, 0));
+            Cv2.WarpAffine(rotatedImage, result, translationMatrix, originalImage.Size(), InterpolationFlags.Linear, BorderTypes.Transparent);
             Console.WriteLine($"적용된 변환: 크기={scale}, 각도={angle}, 이동X={translateX}, 이동Y={translateY}, 최종크기={result.Size()}");
 
             return result;
